@@ -1,6 +1,6 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { Plus, Search, Sparkles, Trash2, Archive, Copy, FileSpreadsheet, Download, Filter, ArchiveRestore } from "lucide-react";
@@ -15,10 +15,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/companies/")({
   ssr: false,
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/auth" });
-  },
   validateSearch: (search: Record<string, unknown>) => ({
     stage: typeof search.stage === "string" ? (search.stage as string) : undefined,
   }),
@@ -27,13 +23,28 @@ export const Route = createFileRoute("/_authenticated/companies/")({
 
 function CompaniesPage() {
   const { t, lang } = useI18n();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const { stage: stageFilter } = Route.useSearch();
+  const [authed, setAuthed] = useState(false);
   const [query, setQuery] = useState("");
   const [priority, setPriority] = useState<Priority | "all">("all");
   const [archived, setArchived] = useState(false);
   const [openSmart, setOpenSmart] = useState(false);
   const [sort, setSort] = useState<"priority" | "recent" | "name">("priority");
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) {
+        navigate({ to: "/auth" });
+      } else {
+        setAuthed(true);
+      }
+    })();
+  }, [navigate]);
+
+  if (!authed) return null;
 
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ["companies", { archived }],

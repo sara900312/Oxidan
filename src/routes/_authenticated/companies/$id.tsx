@@ -1,6 +1,6 @@
-import { createFileRoute, Link, useParams, useNavigate, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, Sparkles, Edit2, Trash2, Archive, Upload, FileText, Download, Save, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
@@ -17,10 +17,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/companies/$id")({
   ssr: false,
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/auth" });
-  },
   component: CompanyDetailPage,
 });
 
@@ -29,9 +25,23 @@ function CompanyDetailPage() {
   const { t, lang, dir } = useI18n();
   const nav = useNavigate();
   const qc = useQueryClient();
+  const [authed, setAuthed] = useState(false);
   const [tab, setTab] = useState<"overview" | "report" | "files" | "timeline">("overview");
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<any>({});
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) {
+        nav({ to: "/auth" });
+      } else {
+        setAuthed(true);
+      }
+    })();
+  }, [nav]);
+
+  if (!authed) return null;
 
   const { data: company } = useQuery({ queryKey: ["company", id], queryFn: () => getCompany(id) });
   const { data: analyses = [] } = useQuery({ queryKey: ["analyses", id], queryFn: () => listAnalyses(id) });

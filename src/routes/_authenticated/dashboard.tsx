@@ -1,6 +1,6 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   listCompanies, priorityColor, getDashboardStatsWithDeltas,
   type Company, type DashboardStatsWithDeltas,
@@ -14,10 +14,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   ssr: false,
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/auth" });
-  },
   component: DashboardPage,
 });
 
@@ -25,8 +21,23 @@ type SortKey = "score" | "priority" | "industry" | "city" | "recent_analysis";
 
 function DashboardPage() {
   const { t, lang } = useI18n();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const [sortKey, setSortKey] = useState<SortKey>("score");
+  const [authed, setAuthed] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) {
+        navigate({ to: "/auth" });
+      } else {
+        setAuthed(true);
+      }
+    })();
+  }, [navigate]);
+
+  if (!authed) return null;
 
   const { data: companies = [], isLoading: loadingCompanies } = useQuery({
     queryKey: ["companies"],
