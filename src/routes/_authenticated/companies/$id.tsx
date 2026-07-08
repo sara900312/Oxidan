@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useParams, useNavigate, redirect } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -13,9 +13,14 @@ import { analyzeCompany } from "@/lib/ai.functions";
 import { AiReport } from "@/components/AiReport";
 import { BdSnapshot } from "@/components/BdSnapshot";
 import { MissingInfoPanel } from "@/components/MissingInfoPanel";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/companies/$id")({
   ssr: false,
+  beforeLoad: async () => {
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) throw redirect({ to: "/auth" });
+  },
   component: CompanyDetailPage,
 });
 

@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
@@ -10,9 +10,14 @@ import { rankAllCompanies } from "@/lib/ai.functions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkles, Building2, TrendingUp, CheckCircle2, ArrowUpRight, TrendingDown, Minus } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   ssr: false,
+  beforeLoad: async () => {
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) throw redirect({ to: "/auth" });
+  },
   component: DashboardPage,
 });
 

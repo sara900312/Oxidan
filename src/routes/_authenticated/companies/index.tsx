@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import * as XLSX from "xlsx";
@@ -11,9 +11,14 @@ import {
 } from "@/lib/companies";
 import { rankAllCompanies } from "@/lib/ai.functions";
 import { SmartAddDialog } from "@/components/SmartAddDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/companies/")({
   ssr: false,
+  beforeLoad: async () => {
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) throw redirect({ to: "/auth" });
+  },
   validateSearch: (search: Record<string, unknown>) => ({
     stage: typeof search.stage === "string" ? (search.stage as string) : undefined,
   }),
