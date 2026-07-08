@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
-import logoAsset from "@/assets/oxidan-logo.png.asset.json";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -74,7 +73,7 @@ function AuthPage() {
       <div className="hidden lg:flex flex-col justify-between p-12 border-l border-border relative overflow-hidden">
         <div className="absolute inset-0 -z-10 opacity-40" style={{ background: "radial-gradient(ellipse 50% 40% at 30% 20%, oklch(0.76 0.11 82 / 30%), transparent 60%)" }} />
         <div className="flex-1 flex flex-col items-center justify-center gap-8">
-          <img src={logoAsset.url} alt="Oxidan" className="h-56 w-auto object-contain drop-shadow-2xl" />
+          <img src="https://cdn.builder.io/api/v1/image/assets%2F9d309b7f914f488e8f6ac99ff7a649b0%2F80ffd9acbd2c46e89c06d2698814eaa9?format=webp&width=800&height=1200" alt="Oxidan" className="h-56 w-auto object-contain drop-shadow-2xl" />
           <div className="text-center">
             <h1 className="font-serif text-5xl italic text-foreground leading-tight max-w-md">
               {t("auth_hero_title")}
