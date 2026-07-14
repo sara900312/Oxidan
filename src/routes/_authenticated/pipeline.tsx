@@ -1,9 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DndContext, useDraggable, useDroppable, type DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { listCompanies, updateStage, STAGES, priorityColor, type Company, type Stage } from "@/lib/companies";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/pipeline")({
   ssr: false,
@@ -12,7 +14,22 @@ export const Route = createFileRoute("/_authenticated/pipeline")({
 
 function PipelinePage() {
   const { t } = useI18n();
+  const navigate = useNavigate();
   const qc = useQueryClient();
+  const [authed, setAuthed] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) {
+        navigate({ to: "/auth" });
+      } else {
+        setAuthed(true);
+      }
+    })();
+  }, [navigate]);
+
+  if (!authed) return null;
   const { data: companies = [] } = useQuery({ queryKey: ["companies"], queryFn: () => listCompanies() });
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 

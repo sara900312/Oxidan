@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
@@ -11,17 +11,31 @@ export const Route = createFileRoute("/_authenticated/settings")({
 
 function SettingsPage() {
   const { t, lang, setLang } = useI18n();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) {
+        navigate({ to: "/auth" });
+      } else {
+        setAuthed(true);
+      }
+    })();
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!authed) return;
     (async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
       const { data } = await supabase.from("profiles").select("*").eq("id", u.user.id).single();
       setProfile(data);
     })();
-  }, []);
+  }, [authed]);
 
   async function save() {
     if (!profile) return;
@@ -39,7 +53,7 @@ function SettingsPage() {
     finally { setLoading(false); }
   }
 
-  if (!profile) return <div className="text-sm text-muted-foreground">…</div>;
+  if (!authed || !profile) return null;
 
   return (
     <div className="max-w-xl space-y-8">
